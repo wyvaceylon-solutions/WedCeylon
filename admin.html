@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>WedCeylon | Admin Dashboard</title>
+<meta name="theme-color" content="#f7f2e9">
+<style>
+:root{--gold:#b18a45;--gold2:#8f6b2e;--ink:#24211c;--muted:#777168;--cream:#f7f3eb;--line:#e8dfd0;--white:#fffdf9;--red:#a33d36;--green:#367454}
+*{box-sizing:border-box}body{margin:0;background:var(--cream);color:var(--ink);font:15px/1.5 Arial,Helvetica,sans-serif}button,input,select{font:inherit}button{cursor:pointer}.wrap{max-width:1180px;margin:auto;padding:28px 20px 60px}.top{display:flex;justify-content:space-between;align-items:center;gap:16px;margin-bottom:28px}.brand{font-family:Georgia,serif;font-size:26px;letter-spacing:.3px}.brand span{color:var(--gold)}.eyebrow{text-transform:uppercase;letter-spacing:2px;color:var(--gold2);font-size:11px;font-weight:bold}.panel{background:var(--white);border:1px solid var(--line);border-radius:16px;box-shadow:0 8px 30px #4d3b1b0b}.login{max-width:430px;margin:9vh auto;padding:34px}.login h1{font:32px Georgia,serif;margin:8px 0}.sub{color:var(--muted)}label{display:block;font-size:13px;font-weight:bold;margin:17px 0 6px}input,select{width:100%;padding:12px 13px;border:1px solid var(--line);border-radius:9px;background:white;color:var(--ink);outline-color:var(--gold)}.btn{border:0;border-radius:9px;padding:11px 17px;background:var(--gold);color:white;font-weight:bold}.btn:hover{background:var(--gold2)}.btn.secondary{background:#eee7da;color:var(--ink)}.btn:disabled{opacity:.55;cursor:wait}.error{color:var(--red);font-size:13px;margin-top:12px;min-height:20px}.hidden{display:none!important}.headrow{display:flex;align-items:center;justify-content:space-between;gap:16px;margin:22px 0}.headrow h1{font:34px Georgia,serif;margin:4px 0}.tools{display:grid;grid-template-columns:1fr 210px;gap:10px;margin-bottom:16px}.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:18px 0}.stat{padding:17px 19px}.stat small{color:var(--muted)}.stat strong{display:block;font:30px Georgia,serif;margin-top:4px}.tablepanel{overflow:hidden}.tablewrap{overflow-x:auto}table{border-collapse:collapse;width:100%;min-width:850px}th,td{text-align:left;padding:14px 16px;border-bottom:1px solid var(--line);vertical-align:middle}th{font-size:11px;letter-spacing:1px;text-transform:uppercase;color:var(--muted);background:#fbf8f2}td{font-size:13px}tbody tr:last-child td{border-bottom:0}.couple{font-weight:bold;font-size:14px}.muted{color:var(--muted)}.status{min-width:145px;padding:8px;border-radius:8px;font-size:12px}.empty{text-align:center;padding:42px;color:var(--muted)}.notice{padding:12px 14px;border-radius:9px;background:#f3ecde;color:#6c542b;font-size:13px;margin:14px 0}.actions{display:flex;gap:8px;align-items:center}.footer{text-align:center;color:var(--muted);font-size:12px;margin-top:24px}@media(max-width:650px){.wrap{padding:18px 12px 40px}.headrow{align-items:flex-start}.headrow h1{font-size:28px}.stats{gap:8px}.stat{padding:12px}.stat strong{font-size:24px}.tools{grid-template-columns:1fr}.top{margin-bottom:18px}.login{margin:5vh auto;padding:25px}}
+</style>
+</head>
+<body>
+<section id="loginView" class="wrap">
+  <div class="panel login">
+    <div class="eyebrow">WedCeylon • Private Area</div>
+    <h1>Admin Login</h1>
+    <p class="sub">Sign in to manage wedding invitation orders.</p>
+    <form id="loginForm">
+      <label for="email">Email address</label><input id="email" type="email" autocomplete="username" value="tharulgatamanna@gmail.com" required>
+      <label for="password">Password</label><input id="password" type="password" autocomplete="current-password" required>
+      <button id="loginBtn" class="btn" style="width:100%;margin-top:22px">Sign in</button>
+      <div id="loginError" class="error" role="alert"></div>
+    </form>
+    <p class="muted" style="font-size:12px;margin-top:16px">Only the authorised WedCeylon admin account can access orders.</p>
+  </div>
+</section>
+<main id="dashboardView" class="wrap hidden">
+  <header class="top"><div><div class="brand">Wed<span>Ceylon</span></div><div class="eyebrow">Administration</div></div><div class="actions"><span id="adminEmail" class="muted" style="font-size:12px"></span><button id="logoutBtn" class="btn secondary">Sign out</button></div></header>
+  <div class="headrow"><div><div class="eyebrow">Order management</div><h1>Wedding Orders</h1><div class="sub">Review customer requests and update their progress.</div></div><button id="refreshBtn" class="btn secondary">↻ Refresh</button></div>
+  <div class="stats"><div class="panel stat"><small>Total orders</small><strong id="totalCount">—</strong></div><div class="panel stat"><small>Pending</small><strong id="pendingCount">—</strong></div><div class="panel stat"><small>Completed</small><strong id="completedCount">—</strong></div></div>
+  <div class="notice">Customer details are private. Keep this admin page and your login password secure.</div>
+  <div class="tools"><input id="searchInput" type="search" placeholder="Search couple, email, WhatsApp or venue…"><select id="filterStatus"><option value="all">All statuses</option><option value="pending">Pending</option><option value="in progress">In Progress</option><option value="completed">Completed</option></select></div>
+  <section class="panel tablepanel"><div class="tablewrap"><table><thead><tr><th>Couple</th><th>Contact</th><th>Wedding date</th><th>Design / Language</th><th>Guests</th><th>Status</th></tr></thead><tbody id="ordersBody"><tr><td colspan="6" class="empty">Loading orders…</td></tr></tbody></table></div></section>
+  <div id="dashboardMessage" class="error" role="status"></div><div class="footer">WedCeylon Admin • Handle customer information responsibly</div>
+</main>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+// Browser-safe Supabase publishable key. Never place a service_role/secret key in this file.
+const SUPABASE_URL = 'https://fsssnncsiddddhjcwofk.supabase.co';
+const SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_se6o3yLlolTmGNRe0WFhLg_MPHcSD1R';
+const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
+const $ = id => document.getElementById(id);
+let allOrders = [];
+const show = (el, yes) => el.classList.toggle('hidden', !yes);
+function message(text, isError=true){$('dashboardMessage').textContent=text;$('dashboardMessage').style.color=isError?'#a33d36':'#367454';}
+function niceDate(value){if(!value)return '—';const d=new Date(value+'T00:00:00');return Number.isNaN(d.getTime())?value:d.toLocaleDateString(undefined,{year:'numeric',month:'short',day:'numeric'});}
+function makeCell(text, className){const td=document.createElement('td');td.textContent=text||'—';if(className)td.className=className;return td;}
+function renderOrders(){
+ const q=$('searchInput').value.trim().toLowerCase(), f=$('filterStatus').value;
+ const rows=allOrders.filter(o=>{const hay=[o.couple_names,o.email,o.whatsapp,o.venue,o.design,o.language].join(' ').toLowerCase();return (!q||hay.includes(q))&&(f==='all'||String(o.status||'pending').toLowerCase()===f);});
+ const body=$('ordersBody');body.replaceChildren();
+ if(!rows.length){const tr=document.createElement('tr'),td=document.createElement('td');td.colSpan=6;td.className='empty';td.textContent=allOrders.length?'No orders match your search.':'No orders found yet.';tr.append(td);body.append(tr);return;}
+ rows.forEach(o=>{const tr=document.createElement('tr');const couple=makeCell(o.couple_names,'couple');tr.append(couple);const contact=document.createElement('td');const em=document.createElement('div');em.textContent=o.email||'—';const wa=document.createElement('div');wa.className='muted';wa.textContent=o.whatsapp||'';contact.append(em,wa);tr.append(contact);tr.append(makeCell(niceDate(o.wedding_date)));tr.append(makeCell([o.design,o.language].filter(Boolean).join(' / ')));tr.append(makeCell(o.guest_count));
+ const statusTd=document.createElement('td'),sel=document.createElement('select');sel.className='status';['pending','in progress','completed'].forEach(v=>{const op=document.createElement('option');op.value=v;op.textContent=v==='in progress'?'In Progress':v[0].toUpperCase()+v.slice(1);sel.append(op);});sel.value=String(o.status||'pending').toLowerCase();sel.addEventListener('change',()=>updateStatus(o.id,sel));statusTd.append(sel);tr.append(statusTd);body.append(tr);
+ const details=document.createElement('tr');const detail=document.createElement('td');detail.colSpan=6;detail.style.paddingTop='0';detail.style.color='#777168';detail.textContent=[o.venue?'Venue: '+o.venue:'',o.notes?'Notes: '+o.notes:'',o.created_at?'Received: '+new Date(o.created_at).toLocaleString():''].filter(Boolean).join('  •  ');details.append(detail);body.append(details);
+ });
+}
+async function loadOrders(){message('');$('ordersBody').innerHTML='<tr><td colspan="6" class="empty">Loading orders…</td></tr>';
+ const {data,error}=await db.from('orders').select('id,created_at,couple_names,email,whatsapp,wedding_date,venue,design,language,guest_count,notes,status').order('created_at',{ascending:false});
+ if(error){message('Could not load orders: '+error.message);$('ordersBody').innerHTML='<tr><td colspan="6" class="empty">Unable to load orders. Check your Supabase settings and policies.</td></tr>';return;}
+ allOrders=data||[];$('totalCount').textContent=allOrders.length;$('pendingCount').textContent=allOrders.filter(o=>(o.status||'pending').toLowerCase()==='pending').length;$('completedCount').textContent=allOrders.filter(o=>(o.status||'pending').toLowerCase()==='completed').length;renderOrders();
+}
+async function updateStatus(id,select){select.disabled=true;const {error}=await db.from('orders').update({status:select.value}).eq('id',id);select.disabled=false;if(error){message('Status update failed: '+error.message);await loadOrders();return;}const order=allOrders.find(o=>o.id===id);if(order)order.status=select.value;$('pendingCount').textContent=allOrders.filter(o=>(o.status||'pending').toLowerCase()==='pending').length;$('completedCount').textContent=allOrders.filter(o=>(o.status||'pending').toLowerCase()==='completed').length;message('Order status updated.',false);}
+async function setSession(){const {data:{session}}=await db.auth.getSession();const allowed=session&&session.user&&session.user.email?.toLowerCase()==='tharulgatamanna@gmail.com';show($('loginView'),!allowed);show($('dashboardView'),!!allowed);if(allowed){$('adminEmail').textContent=session.user.email;await loadOrders();}else if(session){await db.auth.signOut();$('loginError').textContent='This account is not authorised for the admin dashboard.';}}
+$('loginForm').addEventListener('submit',async e=>{e.preventDefault();$('loginError').textContent='';$('loginBtn').disabled=true;$('loginBtn').textContent='Signing in…';const {error}=await db.auth.signInWithPassword({email:$('email').value.trim(),password:$('password').value});$('loginBtn').disabled=false;$('loginBtn').textContent='Sign in';if(error){$('loginError').textContent=error.message;return;}await setSession();});
+$('logoutBtn').addEventListener('click',async()=>{await db.auth.signOut();allOrders=[];show($('dashboardView'),false);show($('loginView'),true);$('password').value='';});
+$('refreshBtn').addEventListener('click',loadOrders);$('searchInput').addEventListener('input',renderOrders);$('filterStatus').addEventListener('change',renderOrders);
+db.auth.onAuthStateChange((_event,session)=>{if(!session){show($('dashboardView'),false);show($('loginView'),true);}});
+setSession().catch(err=>{$('loginError').textContent='Unable to initialise login: '+err.message;});
+</script>
+</body></html>
