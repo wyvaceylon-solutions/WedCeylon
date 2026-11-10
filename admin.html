@@ -1,71 +1,95 @@
 <!doctype html>
 <html lang="en">
 <head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>WedCeylon | Admin Dashboard</title>
-<meta name="theme-color" content="#f7f2e9">
-<style>
-:root{--gold:#b18a45;--gold2:#8f6b2e;--ink:#24211c;--muted:#777168;--cream:#f7f3eb;--line:#e8dfd0;--white:#fffdf9;--red:#a33d36;--green:#367454}
-*{box-sizing:border-box}body{margin:0;background:var(--cream);color:var(--ink);font:15px/1.5 Arial,Helvetica,sans-serif}button,input,select{font:inherit}button{cursor:pointer}.wrap{max-width:1180px;margin:auto;padding:28px 20px 60px}.top{display:flex;justify-content:space-between;align-items:center;gap:16px;margin-bottom:28px}.brand{font-family:Georgia,serif;font-size:26px;letter-spacing:.3px}.brand span{color:var(--gold)}.eyebrow{text-transform:uppercase;letter-spacing:2px;color:var(--gold2);font-size:11px;font-weight:bold}.panel{background:var(--white);border:1px solid var(--line);border-radius:16px;box-shadow:0 8px 30px #4d3b1b0b}.login{max-width:430px;margin:9vh auto;padding:34px}.login h1{font:32px Georgia,serif;margin:8px 0}.sub{color:var(--muted)}label{display:block;font-size:13px;font-weight:bold;margin:17px 0 6px}input,select{width:100%;padding:12px 13px;border:1px solid var(--line);border-radius:9px;background:white;color:var(--ink);outline-color:var(--gold)}.btn{border:0;border-radius:9px;padding:11px 17px;background:var(--gold);color:white;font-weight:bold}.btn:hover{background:var(--gold2)}.btn.secondary{background:#eee7da;color:var(--ink)}.btn:disabled{opacity:.55;cursor:wait}.error{color:var(--red);font-size:13px;margin-top:12px;min-height:20px}.hidden{display:none!important}.headrow{display:flex;align-items:center;justify-content:space-between;gap:16px;margin:22px 0}.headrow h1{font:34px Georgia,serif;margin:4px 0}.tools{display:grid;grid-template-columns:1fr 210px;gap:10px;margin-bottom:16px}.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:18px 0}.stat{padding:17px 19px}.stat small{color:var(--muted)}.stat strong{display:block;font:30px Georgia,serif;margin-top:4px}.tablepanel{overflow:hidden}.tablewrap{overflow-x:auto}table{border-collapse:collapse;width:100%;min-width:850px}th,td{text-align:left;padding:14px 16px;border-bottom:1px solid var(--line);vertical-align:middle}th{font-size:11px;letter-spacing:1px;text-transform:uppercase;color:var(--muted);background:#fbf8f2}td{font-size:13px}tbody tr:last-child td{border-bottom:0}.couple{font-weight:bold;font-size:14px}.muted{color:var(--muted)}.status{min-width:145px;padding:8px;border-radius:8px;font-size:12px}.empty{text-align:center;padding:42px;color:var(--muted)}.notice{padding:12px 14px;border-radius:9px;background:#f3ecde;color:#6c542b;font-size:13px;margin:14px 0}.actions{display:flex;gap:8px;align-items:center}.footer{text-align:center;color:var(--muted);font-size:12px;margin-top:24px}@media(max-width:650px){.wrap{padding:18px 12px 40px}.headrow{align-items:flex-start}.headrow h1{font-size:28px}.stats{gap:8px}.stat{padding:12px}.stat strong{font-size:24px}.tools{grid-template-columns:1fr}.top{margin-bottom:18px}.login{margin:5vh auto;padding:25px}}
-</style>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>WedCeylon | Admin Dashboard</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    :root{--gold:#b38a43;--ink:#28251f;--muted:#777064;--paper:#fbf8f1;--line:#e9e0d0;--white:#fff}
+    *{box-sizing:border-box}body{margin:0;background:var(--paper);color:var(--ink);font:15px/1.5 Arial,sans-serif}
+    header{background:#29251f;color:#fff;padding:22px max(20px,calc((100% - 1100px)/2));display:flex;justify-content:space-between;align-items:center;gap:16px}
+    header h1{font:normal 27px Georgia,serif;margin:0}header small{color:#d8c8a8;letter-spacing:2px}
+    main{max-width:1100px;margin:30px auto;padding:0 18px}.panel{background:#fff;border:1px solid var(--line);border-radius:14px;padding:22px;margin:0 0 22px;box-shadow:0 5px 22px #4938160a}
+    h2{font:normal 23px Georgia,serif;margin:0 0 16px}h3{font-size:16px;margin:0 0 12px;color:#604c2b}
+    .muted{color:var(--muted);font-size:13px}.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}.field{display:flex;flex-direction:column;gap:5px}.field.full{grid-column:1/-1}
+    label{font-size:13px;color:#61594d}input,select,textarea{width:100%;padding:11px 12px;border:1px solid #dcd2c0;border-radius:8px;background:#fff;font:inherit;color:var(--ink)}textarea{min-height:90px;resize:vertical}
+    button{border:0;border-radius:8px;padding:11px 16px;background:var(--gold);color:white;font-weight:600;cursor:pointer}button.secondary{background:#eee7da;color:#4b4030}button.danger{background:#8d5146}button:disabled{opacity:.5;cursor:not-allowed}
+    .actions{display:flex;gap:9px;flex-wrap:wrap;margin-top:14px}.hidden{display:none!important}.notice{padding:11px 13px;border-radius:8px;background:#f5efe3;color:#5a482b;margin:12px 0;font-size:14px}.error{background:#fbeceb;color:#8c3027}.success{background:#edf6ed;color:#28632d}
+    .tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px}.tabs button{background:#eee7da;color:#4b4030}.tabs button.active{background:var(--gold);color:#fff}
+    .table-wrap{overflow:auto}table{width:100%;border-collapse:collapse;min-width:680px}th,td{text-align:left;padding:11px 9px;border-bottom:1px solid var(--line);vertical-align:top;font-size:14px}th{color:#74664e;font-weight:600}
+    .pill{display:inline-block;padding:3px 9px;border-radius:99px;background:#f2eadb;color:#6c5327;font-size:12px}.cards{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}.stat{background:#f8f3e9;border-radius:10px;padding:15px}.stat b{display:block;font:26px Georgia,serif;color:#8b692e}
+    #loginBox{max-width:430px;margin:55px auto}.top-actions{display:flex;align-items:center;gap:12px}.link{color:#8b692e;word-break:break-all}
+    @media(max-width:650px){.grid,.cards{grid-template-columns:1fr}header{align-items:flex-start;flex-direction:column}.panel{padding:17px}main{margin-top:18px}}
+  </style>
 </head>
 <body>
-<section id="loginView" class="wrap">
-  <div class="panel login">
-    <div class="eyebrow">WedCeylon • Private Area</div>
-    <h1>Admin Login</h1>
-    <p class="sub">Sign in to manage wedding invitation orders.</p>
-    <form id="loginForm">
-      <label for="email">Email address</label><input id="email" type="email" autocomplete="username" value="tharulgatamanna@gmail.com" required>
-      <label for="password">Password</label><input id="password" type="password" autocomplete="current-password" required>
-      <button id="loginBtn" class="btn" style="width:100%;margin-top:22px">Sign in</button>
-      <div id="loginError" class="error" role="alert"></div>
-    </form>
-    <p class="muted" style="font-size:12px;margin-top:16px">Only the authorised WedCeylon admin account can access orders.</p>
-  </div>
-</section>
-<main id="dashboardView" class="wrap hidden">
-  <header class="top"><div><div class="brand">Wed<span>Ceylon</span></div><div class="eyebrow">Administration</div></div><div class="actions"><span id="adminEmail" class="muted" style="font-size:12px"></span><button id="logoutBtn" class="btn secondary">Sign out</button></div></header>
-  <div class="headrow"><div><div class="eyebrow">Order management</div><h1>Wedding Orders</h1><div class="sub">Review customer requests and update their progress.</div></div><button id="refreshBtn" class="btn secondary">↻ Refresh</button></div>
-  <div class="stats"><div class="panel stat"><small>Total orders</small><strong id="totalCount">—</strong></div><div class="panel stat"><small>Pending</small><strong id="pendingCount">—</strong></div><div class="panel stat"><small>Completed</small><strong id="completedCount">—</strong></div></div>
-  <div class="notice">Customer details are private. Keep this admin page and your login password secure.</div>
-  <div class="tools"><input id="searchInput" type="search" placeholder="Search couple, email, WhatsApp or venue…"><select id="filterStatus"><option value="all">All statuses</option><option value="pending">Pending</option><option value="in progress">In Progress</option><option value="completed">Completed</option></select></div>
-  <section class="panel tablepanel"><div class="tablewrap"><table><thead><tr><th>Couple</th><th>Contact</th><th>Wedding date</th><th>Design / Language</th><th>Guests</th><th>Status</th></tr></thead><tbody id="ordersBody"><tr><td colspan="6" class="empty">Loading orders…</td></tr></tbody></table></div></section>
-  <div id="dashboardMessage" class="error" role="status"></div><div class="footer">WedCeylon Admin • Handle customer information responsibly</div>
+<header><div><small>WEDDING INVITATIONS, BEAUTIFULLY DIGITAL</small><h1>WedCeylon Admin</h1></div><div class="top-actions"><span id="adminEmail" class="muted"></span><button id="logoutBtn" class="secondary hidden">Log out</button></div></header>
+<main>
+  <section id="loginBox" class="panel">
+    <h2>Admin Login</h2><p class="muted">Sign in with your WedCeylon administrator account.</p>
+    <form id="loginForm" class="grid">
+      <div class="field full"><label for="email">Email</label><input id="email" type="email" autocomplete="username" required value="tharulgatamanna@gmail.com"></div>
+      <div class="field full"><label for="password">Password</label><input id="password" type="password" autocomplete="current-password" required></div>
+      <div class="field full"><button type="submit">Log in</button></div>
+    </form><div id="loginMsg" class="notice hidden"></div>
+  </section>
+
+  <section id="dashboard" class="hidden">
+    <div class="cards" style="margin-bottom:20px">
+      <div class="stat"><span class="muted">Total orders</span><b id="orderTotal">—</b></div>
+      <div class="stat"><span class="muted">Invitations</span><b id="inviteTotal">—</b></div>
+      <div class="stat"><span class="muted">Guest RSVPs</span><b id="rsvpTotal">—</b></div>
+    </div>
+    <nav class="tabs"><button class="active" data-tab="orders">Orders</button><button data-tab="invitations">Invitations</button><button data-tab="create">Create invitation</button></nav>
+    <section id="tab-orders" class="panel"><div class="top-actions" style="justify-content:space-between"><h2>Customer Orders</h2><button class="secondary" id="refreshOrders">Refresh</button></div><div id="ordersMsg" class="notice hidden"></div><div class="table-wrap"><table><thead><tr><th>Couple</th><th>Email</th><th>Wedding date</th><th>Design</th><th>Status</th><th>Update</th></tr></thead><tbody id="ordersBody"></tbody></table></div></section>
+    <section id="tab-invitations" class="panel hidden"><div class="top-actions" style="justify-content:space-between"><h2>Wedding Invitations</h2><button class="secondary" id="refreshInvites">Refresh</button></div><div id="invitesMsg" class="notice hidden"></div><div class="table-wrap"><table><thead><tr><th>Couple</th><th>Wedding date</th><th>Slug / link</th><th>Published</th><th>RSVPs</th><th>Action</th></tr></thead><tbody id="invitesBody"></tbody></table></div></section>
+    <section id="tab-create" class="panel hidden"><h2>Create Wedding Invitation</h2><p class="muted">Create the couple's invitation and assign their Supabase Auth user ID. The invitation link will use the slug below.</p>
+      <form id="inviteForm" class="grid">
+        <div class="field"><label for="orderId">Related order (optional)</label><select id="orderId"><option value="">No order selected</option></select></div>
+        <div class="field"><label for="ownerId">Couple account User ID (UUID)</label><input id="ownerId" placeholder="Paste Auth user UUID" ></div>
+        <div class="field"><label for="coupleNames">Couple names *</label><input id="coupleNames" required placeholder="Nimal & Sachini"></div>
+        <div class="field"><label for="slug">Unique URL slug *</label><input id="slug" required placeholder="nimal-sachini" pattern="[a-z0-9-]+" title="Use lowercase letters, numbers and hyphens"></div>
+        <div class="field"><label for="weddingDate">Wedding date</label><input id="weddingDate" type="date"></div>
+        <div class="field"><label for="ceremonyTime">Ceremony time</label><input id="ceremonyTime" placeholder="10:00 AM"></div>
+        <div class="field"><label for="venue">Venue</label><input id="venue" placeholder="Venue name"></div>
+        <div class="field"><label for="venueAddress">Venue address</label><input id="venueAddress" placeholder="Full address"></div>
+        <div class="field full"><label for="mapUrl">Google Maps link</label><input id="mapUrl" type="url" placeholder="https://maps.google.com/..."></div>
+        <div class="field"><label for="design">Design theme</label><input id="design" placeholder="Gold & Cream"></div>
+        <div class="field"><label for="language">Language</label><select id="language"><option value="Sinhala & English">Sinhala & English</option><option value="Sinhala">Sinhala</option><option value="English">English</option></select></div>
+        <div class="field full"><label for="message">Invitation message</label><textarea id="message" placeholder="We warmly invite you to celebrate with us..."></textarea></div>
+        <div class="field full"><button type="submit">Save invitation as draft</button></div>
+      </form><div id="createMsg" class="notice hidden"></div>
+      <p class="muted">To create a couple login safely: Supabase → Authentication → Users → Add user. Then copy that user's UUID into the field above. Never put a service_role key in this website.</p>
+    </section>
+  </section>
 </main>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
-// Browser-safe Supabase publishable key. Never place a service_role/secret key in this file.
-const SUPABASE_URL = 'https://fsssnncsiddddhjcwofk.supabase.co';
-const SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_se6o3yLlolTmGNRe0WFhLg_MPHcSD1R';
-const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
-const $ = id => document.getElementById(id);
-let allOrders = [];
-const show = (el, yes) => el.classList.toggle('hidden', !yes);
-function message(text, isError=true){$('dashboardMessage').textContent=text;$('dashboardMessage').style.color=isError?'#a33d36':'#367454';}
-function niceDate(value){if(!value)return '—';const d=new Date(value+'T00:00:00');return Number.isNaN(d.getTime())?value:d.toLocaleDateString(undefined,{year:'numeric',month:'short',day:'numeric'});}
-function makeCell(text, className){const td=document.createElement('td');td.textContent=text||'—';if(className)td.className=className;return td;}
-function renderOrders(){
- const q=$('searchInput').value.trim().toLowerCase(), f=$('filterStatus').value;
- const rows=allOrders.filter(o=>{const hay=[o.couple_names,o.email,o.whatsapp,o.venue,o.design,o.language].join(' ').toLowerCase();return (!q||hay.includes(q))&&(f==='all'||String(o.status||'pending').toLowerCase()===f);});
- const body=$('ordersBody');body.replaceChildren();
- if(!rows.length){const tr=document.createElement('tr'),td=document.createElement('td');td.colSpan=6;td.className='empty';td.textContent=allOrders.length?'No orders match your search.':'No orders found yet.';tr.append(td);body.append(tr);return;}
- rows.forEach(o=>{const tr=document.createElement('tr');const couple=makeCell(o.couple_names,'couple');tr.append(couple);const contact=document.createElement('td');const em=document.createElement('div');em.textContent=o.email||'—';const wa=document.createElement('div');wa.className='muted';wa.textContent=o.whatsapp||'';contact.append(em,wa);tr.append(contact);tr.append(makeCell(niceDate(o.wedding_date)));tr.append(makeCell([o.design,o.language].filter(Boolean).join(' / ')));tr.append(makeCell(o.guest_count));
- const statusTd=document.createElement('td'),sel=document.createElement('select');sel.className='status';['pending','in progress','completed'].forEach(v=>{const op=document.createElement('option');op.value=v;op.textContent=v==='in progress'?'In Progress':v[0].toUpperCase()+v.slice(1);sel.append(op);});sel.value=String(o.status||'pending').toLowerCase();sel.addEventListener('change',()=>updateStatus(o.id,sel));statusTd.append(sel);tr.append(statusTd);body.append(tr);
- const details=document.createElement('tr');const detail=document.createElement('td');detail.colSpan=6;detail.style.paddingTop='0';detail.style.color='#777168';detail.textContent=[o.venue?'Venue: '+o.venue:'',o.notes?'Notes: '+o.notes:'',o.created_at?'Received: '+new Date(o.created_at).toLocaleString():''].filter(Boolean).join('  •  ');details.append(detail);body.append(details);
- });
-}
-async function loadOrders(){message('');$('ordersBody').innerHTML='<tr><td colspan="6" class="empty">Loading orders…</td></tr>';
- const {data,error}=await db.from('orders').select('id,created_at,couple_names,email,whatsapp,wedding_date,venue,design,language,guest_count,notes,status').order('created_at',{ascending:false});
- if(error){message('Could not load orders: '+error.message);$('ordersBody').innerHTML='<tr><td colspan="6" class="empty">Unable to load orders. Check your Supabase settings and policies.</td></tr>';return;}
- allOrders=data||[];$('totalCount').textContent=allOrders.length;$('pendingCount').textContent=allOrders.filter(o=>(o.status||'pending').toLowerCase()==='pending').length;$('completedCount').textContent=allOrders.filter(o=>(o.status||'pending').toLowerCase()==='completed').length;renderOrders();
-}
-async function updateStatus(id,select){select.disabled=true;const {error}=await db.from('orders').update({status:select.value}).eq('id',id);select.disabled=false;if(error){message('Status update failed: '+error.message);await loadOrders();return;}const order=allOrders.find(o=>o.id===id);if(order)order.status=select.value;$('pendingCount').textContent=allOrders.filter(o=>(o.status||'pending').toLowerCase()==='pending').length;$('completedCount').textContent=allOrders.filter(o=>(o.status||'pending').toLowerCase()==='completed').length;message('Order status updated.',false);}
-async function setSession(){const {data:{session}}=await db.auth.getSession();const allowed=session&&session.user&&session.user.email?.toLowerCase()==='tharulgatamanna@gmail.com';show($('loginView'),!allowed);show($('dashboardView'),!!allowed);if(allowed){$('adminEmail').textContent=session.user.email;await loadOrders();}else if(session){await db.auth.signOut();$('loginError').textContent='This account is not authorised for the admin dashboard.';}}
-$('loginForm').addEventListener('submit',async e=>{e.preventDefault();$('loginError').textContent='';$('loginBtn').disabled=true;$('loginBtn').textContent='Signing in…';const {error}=await db.auth.signInWithPassword({email:$('email').value.trim(),password:$('password').value});$('loginBtn').disabled=false;$('loginBtn').textContent='Sign in';if(error){$('loginError').textContent=error.message;return;}await setSession();});
-$('logoutBtn').addEventListener('click',async()=>{await db.auth.signOut();allOrders=[];show($('dashboardView'),false);show($('loginView'),true);$('password').value='';});
-$('refreshBtn').addEventListener('click',loadOrders);$('searchInput').addEventListener('input',renderOrders);$('filterStatus').addEventListener('change',renderOrders);
-db.auth.onAuthStateChange((_event,session)=>{if(!session){show($('dashboardView'),false);show($('loginView'),true);}});
-setSession().catch(err=>{$('loginError').textContent='Unable to initialise login: '+err.message;});
+  // Public publishable key is safe for browser use when Row Level Security is enabled.
+  const SUPABASE_URL = 'https://fsssnncsiddddhjcwofk.supabase.co';
+  const SUPABASE_ANON_KEY = 'sb_publishable_se6o3yLlolTmGNRe0WFhLg_MPHcSD1R';
+  const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  const $ = id => document.getElementById(id);
+  const showMsg = (id, message, type='') => { const el=$(id); el.textContent=message; el.className='notice '+type; el.classList.remove('hidden'); };
+  const hideMsg = id => $(id).classList.add('hidden');
+  let ordersCache=[];
+  function switchTab(name){ document.querySelectorAll('[data-tab]').forEach(b=>b.classList.toggle('active',b.dataset.tab===name)); ['orders','invitations','create'].forEach(t=>$('tab-'+t).classList.toggle('hidden',t!==name)); }
+  document.querySelectorAll('[data-tab]').forEach(b=>b.addEventListener('click',()=>switchTab(b.dataset.tab)));
+  $('loginForm').addEventListener('submit',async e=>{e.preventDefault();hideMsg('loginMsg');const {error}=await db.auth.signInWithPassword({email:$('email').value.trim(),password:$('password').value});if(error){showMsg('loginMsg',error.message,'error');return;}await checkSession();});
+  $('logoutBtn').addEventListener('click',async()=>{await db.auth.signOut();await checkSession();});
+  async function checkSession(){const {data:{session}}=await db.auth.getSession();const logged=!!session;$('loginBox').classList.toggle('hidden',logged);$('dashboard').classList.toggle('hidden',!logged);$('logoutBtn').classList.toggle('hidden',!logged);$('adminEmail').textContent=logged?(session.user.email||''):'';if(logged){await loadOrders();await loadInvitations();}}
+  async function loadOrders(){hideMsg('ordersMsg');const {data,error}=await db.from('orders').select('*').order('created_at',{ascending:false});if(error){showMsg('ordersMsg','Could not load orders: '+error.message,'error');return;}ordersCache=data||[];$('orderTotal').textContent=ordersCache.length;$('ordersBody').innerHTML='';$('orderId').innerHTML='<option value="">No order selected</option>';
+    ordersCache.forEach(o=>{const tr=document.createElement('tr');tr.innerHTML=`<td>${esc(o.couple_names)}</td><td>${esc(o.email)}</td><td>${esc(o.wedding_date||'—')}</td><td>${esc(o.design||'—')}</td><td><span class="pill">${esc(o.status||'pending')}</span></td><td><select aria-label="Order status" data-order-status="${esc(o.id)}"><option value="pending">Pending</option><option value="in_progress">In progress</option><option value="completed">Completed</option><option value="cancelled">Cancelled</option></select> <button class="secondary" data-save-order="${esc(o.id)}">Save</button></td>`;$('ordersBody').appendChild(tr);tr.querySelector('select').value=o.status||'pending';const opt=document.createElement('option');opt.value=o.id;opt.textContent=`${o.couple_names} — ${o.email}`;$('orderId').appendChild(opt);});
+    document.querySelectorAll('[data-save-order]').forEach(btn=>btn.addEventListener('click',async()=>{const id=btn.dataset.saveOrder;const status=document.querySelector(`[data-order-status="${CSS.escape(id)}"]`).value;btn.disabled=true;const {error}=await db.from('orders').update({status}).eq('id',id);btn.disabled=false;if(error)showMsg('ordersMsg','Status update failed: '+error.message,'error');else{showMsg('ordersMsg','Order status updated.','success');await loadOrders();}}));
+  }
+  async function loadInvitations(){hideMsg('invitesMsg');const {data,error}=await db.from('invitations').select('id,slug,couple_names,wedding_date,is_published').order('created_at',{ascending:false});if(error){showMsg('invitesMsg','Could not load invitations: '+error.message,'error');return;}const invites=data||[];$('inviteTotal').textContent=invites.length;$('invitesBody').innerHTML='';let totalRsvps=0;
+    for(const inv of invites){const {count}=await db.from('rsvps').select('id',{count:'exact',head:true}).eq('invitation_id',inv.id);totalRsvps+=count||0;const url=`${location.origin}${location.pathname.replace(/[^/]*$/,'')}invite.html?slug=${encodeURIComponent(inv.slug)}`;const tr=document.createElement('tr');tr.innerHTML=`<td>${esc(inv.couple_names)}</td><td>${esc(inv.wedding_date||'—')}</td><td><span class="link">${esc(url)}</span></td><td>${inv.is_published?'<span class="pill">Published</span>':'Draft'}</td><td>${count||0}</td><td><button class="secondary" data-toggle-publish="${esc(inv.id)}" data-published="${inv.is_published?'true':'false'}">${inv.is_published?'Unpublish':'Publish'}</button> <button class="secondary" data-copy-link="${esc(url)}">Copy link</button></td>`;$('invitesBody').appendChild(tr);}
+    $('rsvpTotal').textContent=totalRsvps;
+    document.querySelectorAll('[data-toggle-publish]').forEach(btn=>btn.addEventListener('click',async()=>{const next=btn.dataset.published!=='true';btn.disabled=true;const {error}=await db.from('invitations').update({is_published:next}).eq('id',btn.dataset.togglePublish);btn.disabled=false;if(error)showMsg('invitesMsg','Publish update failed: '+error.message,'error');else{showMsg('invitesMsg',next?'Invitation published.':'Invitation unpublished.','success');await loadInvitations();}}));
+    document.querySelectorAll('[data-copy-link]').forEach(btn=>btn.addEventListener('click',async()=>{try{await navigator.clipboard.writeText(btn.dataset.copyLink);showMsg('invitesMsg','Invitation link copied.','success');}catch{showMsg('invitesMsg','Copy failed. Please copy the link shown in the table.','error');}}));
+  }
+  $('inviteForm').addEventListener('submit',async e=>{e.preventDefault();hideMsg('createMsg');const slug=$('slug').value.trim().toLowerCase();if(!/^[a-z0-9-]+$/.test(slug)){showMsg('createMsg','Slug must contain only lowercase letters, numbers and hyphens.','error');return;}const row={order_id:$('orderId').value||null,owner_user_id:$('ownerId').value.trim()||null,couple_names:$('coupleNames').value.trim(),slug,wedding_date:$('weddingDate').value||null,ceremony_time:$('ceremonyTime').value.trim()||null,venue:$('venue').value.trim()||null,venue_address:$('venueAddress').value.trim()||null,map_url:$('mapUrl').value.trim()||null,message:$('message').value.trim()||null,design:$('design').value.trim()||null,is_published:false};const {error}=await db.from('invitations').insert(row);if(error){showMsg('createMsg','Could not save invitation: '+error.message,'error');return;}showMsg('createMsg','Invitation saved as draft. You can publish it from the Invitations tab.','success');$('inviteForm').reset();await loadInvitations();switchTab('invitations');});
+  $('refreshOrders').addEventListener('click',loadOrders);$('refreshInvites').addEventListener('click',loadInvitations);
+  function esc(value){return String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+  db.auth.onAuthStateChange((_event)=>{checkSession();});checkSession();
 </script>
 </body></html>
