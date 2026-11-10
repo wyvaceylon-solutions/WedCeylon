@@ -28,6 +28,7 @@ nav .links a:hover{color:#ad8a4c}
 .form-note{font:12px/1.7 Arial;color:#777;margin:0}
 .form-submit{grid-column:1/-1;text-align:center;margin-top:8px}
 .form-submit button{border:0;cursor:pointer;font:11px Arial;letter-spacing:.5px}
+.form-submit button:disabled{opacity:.65;cursor:wait}
 .form-message{grid-column:1/-1;text-align:center;color:#80683f;font:13px/1.7 Arial;min-height:20px}
 @media(max-width:750px){.order-section{padding:65px 6%}.order-wrap{padding:25px 18px}.order-form{grid-template-columns:1fr}.field.full,.form-submit,.form-message{grid-column:1}}
 .btn{display:inline-block;background:#29271f;color:white;padding:16px 22px;font-size:11px}
@@ -155,7 +156,7 @@ footer p,footer span{font-size:10px;color:#777}
    <div class="field"><label for="language">INVITATION LANGUAGE</label><select id="language" name="language"><option>English</option><option>Sinhala</option><option>Sinhala & English</option></select></div>
    <div class="field"><label for="guestCount">APPROXIMATE GUEST COUNT</label><select id="guestCount" name="guestCount"><option value="Not sure yet">Not sure yet</option><option>Under 100</option><option>100–250</option><option>250–500</option><option>500+</option></select></div>
    <div class="field full"><label for="notes">ANYTHING ELSE WE SHOULD KNOW?</label><textarea id="notes" name="notes" placeholder="Tell us about your ideas, special requests or invitation features..."></textarea></div>
-   <p class="form-note full">When you submit, your email app will open with your details ready to send to WedCeylon. This is an enquiry form; your order is not confirmed until we contact you.</p>
+   <p class="form-note full">Your enquiry will be securely submitted to WedCeylon. This is an enquiry only; your order is not confirmed until we contact you.</p>
    <div class="form-submit"><button class="btn" type="submit">SEND MY ENQUIRY ↗</button></div>
    <div class="form-message" id="formMessage" role="status" aria-live="polite"></div>
   </form>
@@ -193,20 +194,69 @@ footer p,footer span{font-size:10px;color:#777}
 </footer>
 
 <script>
-document.getElementById('orderForm').addEventListener('submit', function(event){
- event.preventDefault();
- if(!this.reportValidity()) return;
- const data = new FormData(this);
- const labels = {
-  couple: "Couple's names", email: "Email address", phone: "Phone / WhatsApp",
-  weddingDate: "Wedding date", venue: "Venue / location", designChoice: "Preferred design",
-  language: "Invitation language", guestCount: "Approximate guest count", notes: "Additional details"
- };
- const body = Object.entries(labels).map(([key,label]) => `${label}: ${data.get(key) || 'Not provided'}`).join('\n');
- const subject = encodeURIComponent('WedCeylon Wedding Invitation Enquiry');
- const mailBody = encodeURIComponent(body);
- document.getElementById('formMessage').textContent = 'Your email app is opening with your enquiry details. Please press Send in your email app to complete the enquiry.';
- window.location.href = `mailto:hello@wedceylon.online?subject=${subject}&body=${mailBody}`;
+// WedCeylon Supabase connection. The publishable key is designed for browser use.
+const SUPABASE_URL = 'https://fsssnncsiddddhjcwofk.supabase.co';
+const SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_se6o3yLlolTmGNRe0WFhLg_MPHcSD1R';
+
+const orderForm = document.getElementById('orderForm');
+const formMessage = document.getElementById('formMessage');
+const submitButton = orderForm.querySelector('button[type="submit"]');
+
+orderForm.addEventListener('submit', async function(event) {
+  event.preventDefault();
+  if (!orderForm.reportValidity()) return;
+
+  const form = new FormData(orderForm);
+  const guestCount = form.get('guestCount');
+  const order = {
+    couple_names: String(form.get('couple') || '').trim(),
+    email: String(form.get('email') || '').trim(),
+    whatsapp: String(form.get('phone') || '').trim(),
+    wedding_date: form.get('weddingDate') || null,
+    venue: String(form.get('venue') || '').trim() || null,
+    design: form.get('designChoice') || null,
+    language: form.get('language') || null,
+    guest_count: guestCount || null,
+    notes: String(form.get('notes') || '').trim() || null
+  };
+
+  submitButton.disabled = true;
+  submitButton.textContent = 'SENDING…';
+  formMessage.textContent = 'Submitting your enquiry securely…';
+  formMessage.style.color = '#80683f';
+
+  try {
+    const response = await fetch(`${SUPABASE_URL}/rest/v1/orders`, {
+      method: 'POST',
+      headers: {
+        'apikey': SUPABASE_PUBLISHABLE_KEY,
+        'Authorization': `Bearer ${SUPABASE_PUBLISHABLE_KEY}`,
+        'Content-Type': 'application/json',
+        'Prefer': 'return=minimal'
+      },
+      body: JSON.stringify(order)
+    });
+
+    if (!response.ok) {
+      let detail = '';
+      try {
+        const error = await response.json();
+        detail = error.message || error.details || error.hint || '';
+      } catch (_) {}
+      throw new Error(detail || `Request failed (${response.status})`);
+    }
+
+    formMessage.textContent = 'Thank you! Your enquiry has been received by WedCeylon. We will contact you soon.';
+    formMessage.style.color = '#47734f';
+    orderForm.reset();
+  } catch (error) {
+    console.error('WedCeylon order submission error:', error);
+    formMessage.textContent = 'Sorry, we could not submit your enquiry. Please try again. If the problem continues, contact WedCeylon. (' + error.message + ')';
+    formMessage.style.color = '#a33d32';
+  } finally {
+    submitButton.disabled = false;
+    submitButton.textContent = 'SEND MY ENQUIRY ↗';
+  }
 });
 </script>
 </body>
