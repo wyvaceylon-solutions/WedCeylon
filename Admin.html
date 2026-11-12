@@ -1,0 +1,173 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>WedCeylon | Admin Dashboard</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    :root{--gold:#b38a43;--ink:#28251f;--muted:#777064;--paper:#fbf8f1;--line:#e9e0d0;--white:#fff}
+    *{box-sizing:border-box}body{margin:0;background:var(--paper);color:var(--ink);font:15px/1.5 Arial,sans-serif}
+    header{background:#29251f;color:#fff;padding:22px max(20px,calc((100% - 1100px)/2));display:flex;justify-content:space-between;align-items:center;gap:16px}
+    header h1{font:normal 27px Georgia,serif;margin:0}header small{color:#d8c8a8;letter-spacing:2px}
+    main{max-width:1100px;margin:30px auto;padding:0 18px}.panel{background:#fff;border:1px solid var(--line);border-radius:14px;padding:22px;margin:0 0 22px;box-shadow:0 5px 22px #4938160a}
+    h2{font:normal 23px Georgia,serif;margin:0 0 16px}h3{font-size:16px;margin:0 0 12px;color:#604c2b}
+    .muted{color:var(--muted);font-size:13px}.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}.field{display:flex;flex-direction:column;gap:5px}.field.full{grid-column:1/-1}
+    label{font-size:13px;color:#61594d}input,select,textarea{width:100%;padding:11px 12px;border:1px solid #dcd2c0;border-radius:8px;background:#fff;font:inherit;color:var(--ink)}textarea{min-height:90px;resize:vertical}
+    button{border:0;border-radius:8px;padding:11px 16px;background:var(--gold);color:white;font-weight:600;cursor:pointer}button.secondary{background:#eee7da;color:#4b4030}button.danger{background:#8d5146}button:disabled{opacity:.5;cursor:not-allowed}
+    .actions{display:flex;gap:9px;flex-wrap:wrap;margin-top:14px}.hidden{display:none!important}.notice{padding:11px 13px;border-radius:8px;background:#f5efe3;color:#5a482b;margin:12px 0;font-size:14px}.error{background:#fbeceb;color:#8c3027}.success{background:#edf6ed;color:#28632d}
+    .tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px}.tabs button{background:#eee7da;color:#4b4030}.tabs button.active{background:var(--gold);color:#fff}
+    .table-wrap{overflow:auto}table{width:100%;border-collapse:collapse;min-width:680px}th,td{text-align:left;padding:11px 9px;border-bottom:1px solid var(--line);vertical-align:top;font-size:14px}th{color:#74664e;font-weight:600}
+    .pill{display:inline-block;padding:3px 9px;border-radius:99px;background:#f2eadb;color:#6c5327;font-size:12px}.cards{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}.stat{background:#f8f3e9;border-radius:10px;padding:15px}.stat b{display:block;font:26px Georgia,serif;color:#8b692e}
+    #loginBox{max-width:430px;margin:55px auto}.top-actions{display:flex;align-items:center;gap:12px}.link{color:#8b692e;word-break:break-all}
+    @media(max-width:650px){.grid,.cards{grid-template-columns:1fr}header{align-items:flex-start;flex-direction:column}.panel{padding:17px}main{margin-top:18px}}
+  </style>
+</head>
+<body>
+<header><div><small>WEDDING INVITATIONS, BEAUTIFULLY DIGITAL</small><h1>WedCeylon Admin</h1></div><div class="top-actions"><span id="adminEmail" class="muted"></span><button id="logoutBtn" class="secondary hidden">Log out</button></div></header>
+<main>
+  <section id="loginBox" class="panel">
+    <h2>Admin Login</h2><p class="muted">Sign in with your WedCeylon administrator account.</p>
+    <form id="loginForm" class="grid">
+      <div class="field full"><label for="email">Email</label><input id="email" type="email" autocomplete="username" required value="tharulgatamanna@gmail.com"></div>
+      <div class="field full"><label for="password">Password</label><input id="password" type="password" autocomplete="current-password" required></div>
+      <div class="field full"><button type="submit">Log in</button></div>
+    </form><div id="loginMsg" class="notice hidden"></div>
+  </section>
+
+  <section id="dashboard" class="hidden">
+    <div class="cards" style="margin-bottom:20px">
+      <div class="stat"><span class="muted">Total orders</span><b id="orderTotal">—</b></div>
+      <div class="stat"><span class="muted">Invitations</span><b id="inviteTotal">—</b></div>
+      <div class="stat"><span class="muted">Guest RSVPs</span><b id="rsvpTotal">—</b></div>
+    </div>
+    <nav class="tabs"><button class="active" data-tab="orders">Orders</button><button data-tab="invitations">Invitations</button><button data-tab="create">Create invitation</button></nav>
+    <section id="tab-orders" class="panel"><div class="top-actions" style="justify-content:space-between"><h2>Customer Orders</h2><button class="secondary" id="refreshOrders">Refresh</button></div><div id="ordersMsg" class="notice hidden"></div><div class="table-wrap"><table><thead><tr><th>Couple</th><th>Email</th><th>Wedding date</th><th>Design</th><th>Status</th><th>Update</th></tr></thead><tbody id="ordersBody"></tbody></table></div></section>
+    <section id="tab-invitations" class="panel hidden"><div class="top-actions" style="justify-content:space-between"><h2>Wedding Invitations</h2><button class="secondary" id="refreshInvites">Refresh</button></div><div id="invitesMsg" class="notice hidden"></div><div class="table-wrap"><table><thead><tr><th>Couple</th><th>Wedding date</th><th>Slug / link</th><th>Published</th><th>RSVPs</th><th>Action</th></tr></thead><tbody id="invitesBody"></tbody></table></div></section>
+    <section id="tab-create" class="panel hidden"><h2>Create Wedding Invitation</h2><p class="muted">Create the couple's invitation and assign their Supabase Auth user ID. The invitation link will use the slug below.</p>
+      <form id="inviteForm" class="grid">
+        <div class="field"><label for="orderId">Related order (optional)</label><select id="orderId"><option value="">No order selected</option></select></div>
+        <div class="field"><label for="ownerId">Couple account User ID (UUID)</label><input id="ownerId" placeholder="Paste Auth user UUID" ></div>
+        <div class="field"><label for="coupleNames">Couple names *</label><input id="coupleNames" required placeholder="Nimal & Sachini"></div>
+        <div class="field"><label for="slug">Unique URL slug *</label><input id="slug" required placeholder="nimal-sachini" pattern="[a-z0-9-]+" title="Use lowercase letters, numbers and hyphens"></div>
+        <div class="field"><label for="weddingDate">Wedding date</label><input id="weddingDate" type="date"></div>
+        <div class="field"><label for="ceremonyTime">Ceremony time</label><input id="ceremonyTime" placeholder="10:00 AM"></div>
+        <div class="field"><label for="venue">Venue</label><input id="venue" placeholder="Venue name"></div>
+        <div class="field"><label for="venueAddress">Venue address</label><input id="venueAddress" placeholder="Full address"></div>
+        <div class="field full"><label for="mapUrl">Google Maps link</label><input id="mapUrl" type="url" placeholder="https://maps.google.com/..."></div>
+        <div class="field"><label for="design">Design theme</label><input id="design" placeholder="Gold & Cream"></div>
+        <div class="field"><label for="language">Language</label><select id="language"><option value="Sinhala & English">Sinhala & English</option><option value="Sinhala">Sinhala</option><option value="English">English</option></select></div>
+        <div class="field full"><label for="message">Invitation message</label><textarea id="message" placeholder="We warmly invite you to celebrate with us..."></textarea></div>
+        <div class="field full"><button type="submit">Save invitation as draft</button></div>
+      </form><div id="createMsg" class="notice hidden"></div>
+      <p class="muted">To create a couple login safely: Supabase → Authentication → Users → Add user. Then copy that user's UUID into the field above. Never put a service_role key in this website.</p>
+    </section>
+  </section>
+</main>
+<script>
+  const SUPABASE_URL = 'https://fsssnncsiddddhjcwofk.supabase.co';
+  const SUPABASE_ANON_KEY = 'sb_publishable_se6o3yLlolTmGNRe0WFhLg_MPHcSD1R';
+  const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  const $ = id => document.getElementById(id);
+  const showMsg = (id, message, type='') => { const el=$(id); el.textContent=message; el.className='notice '+type; el.classList.remove('hidden'); };
+  const hideMsg = id => $(id).classList.add('hidden');
+  let ordersCache=[];
+  function switchTab(name){ document.querySelectorAll('[data-tab]').forEach(b=>b.classList.toggle('active',b.dataset.tab===name)); ['orders','invitations','create'].forEach(t=>$('tab-'+t).classList.toggle('hidden',t!==name)); }
+  document.querySelectorAll('[data-tab]').forEach(b=>b.addEventListener('click',()=>switchTab(b.dataset.tab)));
+  $('loginForm').addEventListener('submit',async e=>{e.preventDefault();hideMsg('loginMsg');const {error}=await db.auth.signInWithPassword({email:$('email').value.trim(),password:$('password').value});if(error){showMsg('loginMsg',error.message,'error');return;}await checkSession();});
+  $('logoutBtn').addEventListener('click',async()=>{await db.auth.signOut();await checkSession();});
+  async function checkSession(){const {data:{session}}=await db.auth.getSession();const logged=!!session;$('loginBox').classList.toggle('hidden',logged);$('dashboard').classList.toggle('hidden',!logged);$('logoutBtn').classList.toggle('hidden',!logged);$('adminEmail').textContent=logged?(session.user.email||''):'';if(logged){await loadOrders();await loadInvitations();}}
+  
+  async function loadOrders(){
+    hideMsg('ordersMsg');
+    const {data,error}=await db.from('orders').select('*').order('created_at',{ascending:false});
+    if(error){showMsg('ordersMsg','Could not load orders: '+error.message,'error');return;}
+    ordersCache=data||[];
+    $('orderTotal').textContent=ordersCache.length;
+    $('ordersBody').innerHTML='';
+    $('orderId').innerHTML='<option value="">No order selected</option>';
+    
+    ordersCache.forEach(o=>{
+      const tr=document.createElement('tr');
+      tr.innerHTML=`<td>${esc(o.couple_names)}</td><td>${esc(o.email)}</td><td>${esc(o.wedding_date||'—')}</td><td>${esc(o.design||'—')}</td><td><span class="pill">${esc(o.status||'pending')}</span></td><td><select aria-label="Order status" data-order-status="${esc(o.id)}"><option value="pending">Pending</option><option value="in_progress">In progress</option><option value="completed">Completed</option><option value="cancelled">Cancelled</option></select> <button class="secondary" data-save-order="${esc(o.id)}">Save</button></td>`;
+      $('ordersBody').appendChild(tr);
+      tr.querySelector('select').value=o.status||'pending';
+      
+      const opt=document.createElement('option');
+      opt.value=o.id;
+      opt.textContent=`${o.couple_names} — ${o.email}`;
+      $('orderId').appendChild(opt);
+    });
+
+    document.querySelectorAll('[data-save-order]').forEach(btn=>btn.addEventListener('click',async()=>{const id=btn.dataset.saveOrder;const status=document.querySelector(`[data-order-status="${CSS.escape(id)}"]`).value;btn.disabled=true;const {error}=await db.from('orders').update({status}).eq('id',id);btn.disabled=false;if(error)showMsg('ordersMsg','Status update failed: '+error.message,'error');else{showMsg('ordersMsg','Order status updated.','success');await loadOrders();}}));
+  }
+
+  // Related order select කළ විට details auto-fill වීම සඳහා function එකක් එකතු කළා
+  $('orderId').addEventListener('change', (e) => {
+    const selectedOrderId = e.target.value;
+    if (!selectedOrderId) return;
+    const order = ordersCache.find(o => o.id === selectedOrderId);
+    if (order) {
+      if (order.couple_names) {
+        $('coupleNames').value = order.couple_names;
+        // Slug එකක් 자동으로 හදා දීම (e.g. nimal-sachini)
+        const generatedSlug = order.couple_names.toLowerCase().replace(/&/g, 'and').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+        $('slug').value = generatedSlug;
+      }
+      if (order.wedding_date) $('weddingDate').value = order.wedding_date;
+      if (order.venue) $('venue').value = order.venue;
+      if (order.design) $('design').value = order.design;
+      if (order.language) {
+        // Dropdown එකේ අදාළ language එක select කිරීම
+        const langSelect = $('language');
+        for (let i = 0; i < langSelect.options.length; i++) {
+          if (langSelect.options[i].value.toLowerCase().includes(order.language.toLowerCase())) {
+            langSelect.selectedIndex = i;
+            break;
+          }
+        }
+      }
+    }
+  });
+
+  async function loadInvitations(){hideMsg('invitesMsg');const {data,error}=await db.from('invitations').select('id,slug,couple_names,wedding_date,is_published').order('created_at',{ascending:false});if(error){showMsg('invitesMsg','Could not load invitations: '+error.message,'error');return;}const invites=data||[];$('inviteTotal').textContent=invites.length;$('invitesBody').innerHTML='';let totalRsvps=0;
+    for(const inv of invites){const {count}=await db.from('rsvps').select('id',{count:'exact',head:true}).eq('invitation_id',inv.id);totalRsvps+=count||0;const url=`${location.origin}${location.pathname.replace(/[^/]*$/,'')}invite.html?slug=${encodeURIComponent(inv.slug)}`;const tr=document.createElement('tr');tr.innerHTML=`<td>${esc(inv.couple_names)}</td><td>${esc(inv.wedding_date||'—')}</td><td><span class="link">${esc(url)}</span></td><td>${inv.is_published?'<span class="pill">Published</span>':'Draft'}</td><td>${count||0}</td><td><button class="secondary" data-toggle-publish="${esc(inv.id)}" data-published="${inv.is_published?'true':'false'}">${inv.is_published?'Unpublish':'Publish'}</button> <button class="secondary" data-copy-link="${esc(url)}">Copy link</button></td>`;$('invitesBody').appendChild(tr);}
+    $('rsvpTotal').textContent=totalRsvps;
+    document.querySelectorAll('[data-toggle-publish]').forEach(btn=>btn.addEventListener('click',async()=>{const next=btn.dataset.published!=='true';btn.disabled=true;const {error}=await db.from('invitations').update({is_published:next}).eq('id',btn.dataset.togglePublish);btn.disabled=false;if(error)showMsg('invitesMsg','Publish update failed: '+error.message,'error');else{showMsg('invitesMsg',next?'Invitation published.':'Invitation unpublished.','success');await loadInvitations();}}));
+    document.querySelectorAll('[data-copy-link]').forEach(btn=>btn.addEventListener('click',async()=>{try{await navigator.clipboard.writeText(btn.dataset.copyLink);showMsg('invitesMsg','Invitation link copied.','success');}catch{showMsg('invitesMsg','Copy failed. Please copy the link shown in the table.','error');}}));
+  }
+
+  $('inviteForm').addEventListener('submit',async e=>{
+    e.preventDefault();
+    hideMsg('createMsg');
+    const slug=$('slug').value.trim().toLowerCase();
+    if(!/^[a-z0-9-]+$/.test(slug)){showMsg('createMsg','Slug must contain only lowercase letters, numbers and hyphens.','error');return;}
+    
+    const row={
+      order_id:$('orderId').value||null,
+      owner_user_id:$('ownerId').value.trim()||null,
+      couple_names:$('coupleNames').value.trim(),
+      slug,
+      wedding_date:$('weddingDate').value||null,
+      ceremony_time:$('ceremonyTime').value.trim()||null,
+      venue:$('venue').value.trim()||null,
+      venue_address:$('venueAddress').value.trim()||null,
+      map_url:$('mapUrl').value.trim()||null,
+      design:$('design').value.trim()||null,
+      language:$('language').value, // <--- මෙන්න මෙතන language එක නිවැරදිව එකතු කළා
+      message:$('message').value.trim()||null,
+      is_published:false
+    };
+
+    const {error}=await db.from('invitations').insert(row);
+    if(error){showMsg('createMsg','Could not save invitation: '+error.message,'error');return;}
+    showMsg('createMsg','Invitation saved as draft. You can publish it from the Invitations tab.','success');
+    $('inviteForm').reset();
+    await loadInvitations();
+    switchTab('invitations');
+  });
+
+  $('refreshOrders').addEventListener('click',loadOrders);$('refreshInvites').addEventListener('click',loadInvitations);
+  function esc(value){return String(value??'').replace(/[&<>"']/g,c=>({'&':'&','<':'<','>':'>','"':'"',"'":'''}[c]));}
+  db.auth.onAuthStateChange((_event)=>{checkSession();});checkSession();
+</script>
+</body></html>
