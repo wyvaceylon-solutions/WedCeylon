@@ -64,6 +64,7 @@
   </section>
 </main>
 <script>
+  // Public publishable key is safe for browser use when Row Level Security is enabled.
   const SUPABASE_URL = 'https://fsssnncsiddddhjcwofk.supabase.co';
   const SUPABASE_ANON_KEY = 'sb_publishable_se6o3yLlolTmGNRe0WFhLg_MPHcSD1R';
   const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
@@ -76,98 +77,19 @@
   $('loginForm').addEventListener('submit',async e=>{e.preventDefault();hideMsg('loginMsg');const {error}=await db.auth.signInWithPassword({email:$('email').value.trim(),password:$('password').value});if(error){showMsg('loginMsg',error.message,'error');return;}await checkSession();});
   $('logoutBtn').addEventListener('click',async()=>{await db.auth.signOut();await checkSession();});
   async function checkSession(){const {data:{session}}=await db.auth.getSession();const logged=!!session;$('loginBox').classList.toggle('hidden',logged);$('dashboard').classList.toggle('hidden',!logged);$('logoutBtn').classList.toggle('hidden',!logged);$('adminEmail').textContent=logged?(session.user.email||''):'';if(logged){await loadOrders();await loadInvitations();}}
-  
-  async function loadOrders(){
-    hideMsg('ordersMsg');
-    const {data,error}=await db.from('orders').select('*').order('created_at',{ascending:false});
-    if(error){showMsg('ordersMsg','Could not load orders: '+error.message,'error');return;}
-    ordersCache=data||[];
-    $('orderTotal').textContent=ordersCache.length;
-    $('ordersBody').innerHTML='';
-    $('orderId').innerHTML='<option value="">No order selected</option>';
-    
-    ordersCache.forEach(o=>{
-      const tr=document.createElement('tr');
-      tr.innerHTML=`<td>${esc(o.couple_names)}</td><td>${esc(o.email)}</td><td>${esc(o.wedding_date||'—')}</td><td>${esc(o.design||'—')}</td><td><span class="pill">${esc(o.status||'pending')}</span></td><td><select aria-label="Order status" data-order-status="${esc(o.id)}"><option value="pending">Pending</option><option value="in_progress">In progress</option><option value="completed">Completed</option><option value="cancelled">Cancelled</option></select> <button class="secondary" data-save-order="${esc(o.id)}">Save</button></td>`;
-      $('ordersBody').appendChild(tr);
-      tr.querySelector('select').value=o.status||'pending';
-      
-      const opt=document.createElement('option');
-      opt.value=o.id;
-      opt.textContent=`${o.couple_names} — ${o.email}`;
-      $('orderId').appendChild(opt);
-    });
-
+  async function loadOrders(){hideMsg('ordersMsg');const {data,error}=await db.from('orders').select('*').order('created_at',{ascending:false});if(error){showMsg('ordersMsg','Could not load orders: '+error.message,'error');return;}ordersCache=data||[];$('orderTotal').textContent=ordersCache.length;$('ordersBody').innerHTML='';$('orderId').innerHTML='<option value="">No order selected</option>';
+    ordersCache.forEach(o=>{const tr=document.createElement('tr');tr.innerHTML=`<td>${esc(o.couple_names)}</td><td>${esc(o.email)}</td><td>${esc(o.wedding_date||'—')}</td><td>${esc(o.design||'—')}</td><td><span class="pill">${esc(o.status||'pending')}</span></td><td><select aria-label="Order status" data-order-status="${esc(o.id)}"><option value="pending">Pending</option><option value="in_progress">In progress</option><option value="completed">Completed</option><option value="cancelled">Cancelled</option></select> <button class="secondary" data-save-order="${esc(o.id)}">Save</button></td>`;$('ordersBody').appendChild(tr);tr.querySelector('select').value=o.status||'pending';const opt=document.createElement('option');opt.value=o.id;opt.textContent=`${o.couple_names} — ${o.email}`;$('orderId').appendChild(opt);});
     document.querySelectorAll('[data-save-order]').forEach(btn=>btn.addEventListener('click',async()=>{const id=btn.dataset.saveOrder;const status=document.querySelector(`[data-order-status="${CSS.escape(id)}"]`).value;btn.disabled=true;const {error}=await db.from('orders').update({status}).eq('id',id);btn.disabled=false;if(error)showMsg('ordersMsg','Status update failed: '+error.message,'error');else{showMsg('ordersMsg','Order status updated.','success');await loadOrders();}}));
   }
-
-  // Related order select කළ විට details auto-fill වීම සඳහා function එකක් එකතු කළා
-  $('orderId').addEventListener('change', (e) => {
-    const selectedOrderId = e.target.value;
-    if (!selectedOrderId) return;
-    const order = ordersCache.find(o => o.id === selectedOrderId);
-    if (order) {
-      if (order.couple_names) {
-        $('coupleNames').value = order.couple_names;
-        // Slug එකක් 자동으로 හදා දීම (e.g. nimal-sachini)
-        const generatedSlug = order.couple_names.toLowerCase().replace(/&/g, 'and').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
-        $('slug').value = generatedSlug;
-      }
-      if (order.wedding_date) $('weddingDate').value = order.wedding_date;
-      if (order.venue) $('venue').value = order.venue;
-      if (order.design) $('design').value = order.design;
-      if (order.language) {
-        // Dropdown එකේ අදාළ language එක select කිරීම
-        const langSelect = $('language');
-        for (let i = 0; i < langSelect.options.length; i++) {
-          if (langSelect.options[i].value.toLowerCase().includes(order.language.toLowerCase())) {
-            langSelect.selectedIndex = i;
-            break;
-          }
-        }
-      }
-    }
-  });
-
   async function loadInvitations(){hideMsg('invitesMsg');const {data,error}=await db.from('invitations').select('id,slug,couple_names,wedding_date,is_published').order('created_at',{ascending:false});if(error){showMsg('invitesMsg','Could not load invitations: '+error.message,'error');return;}const invites=data||[];$('inviteTotal').textContent=invites.length;$('invitesBody').innerHTML='';let totalRsvps=0;
     for(const inv of invites){const {count}=await db.from('rsvps').select('id',{count:'exact',head:true}).eq('invitation_id',inv.id);totalRsvps+=count||0;const url=`${location.origin}${location.pathname.replace(/[^/]*$/,'')}invite.html?slug=${encodeURIComponent(inv.slug)}`;const tr=document.createElement('tr');tr.innerHTML=`<td>${esc(inv.couple_names)}</td><td>${esc(inv.wedding_date||'—')}</td><td><span class="link">${esc(url)}</span></td><td>${inv.is_published?'<span class="pill">Published</span>':'Draft'}</td><td>${count||0}</td><td><button class="secondary" data-toggle-publish="${esc(inv.id)}" data-published="${inv.is_published?'true':'false'}">${inv.is_published?'Unpublish':'Publish'}</button> <button class="secondary" data-copy-link="${esc(url)}">Copy link</button></td>`;$('invitesBody').appendChild(tr);}
     $('rsvpTotal').textContent=totalRsvps;
     document.querySelectorAll('[data-toggle-publish]').forEach(btn=>btn.addEventListener('click',async()=>{const next=btn.dataset.published!=='true';btn.disabled=true;const {error}=await db.from('invitations').update({is_published:next}).eq('id',btn.dataset.togglePublish);btn.disabled=false;if(error)showMsg('invitesMsg','Publish update failed: '+error.message,'error');else{showMsg('invitesMsg',next?'Invitation published.':'Invitation unpublished.','success');await loadInvitations();}}));
     document.querySelectorAll('[data-copy-link]').forEach(btn=>btn.addEventListener('click',async()=>{try{await navigator.clipboard.writeText(btn.dataset.copyLink);showMsg('invitesMsg','Invitation link copied.','success');}catch{showMsg('invitesMsg','Copy failed. Please copy the link shown in the table.','error');}}));
   }
-
-  $('inviteForm').addEventListener('submit',async e=>{
-    e.preventDefault();
-    hideMsg('createMsg');
-    const slug=$('slug').value.trim().toLowerCase();
-    if(!/^[a-z0-9-]+$/.test(slug)){showMsg('createMsg','Slug must contain only lowercase letters, numbers and hyphens.','error');return;}
-    
-    const row={
-      order_id:$('orderId').value||null,
-      owner_user_id:$('ownerId').value.trim()||null,
-      couple_names:$('coupleNames').value.trim(),
-      slug,
-      wedding_date:$('weddingDate').value||null,
-      ceremony_time:$('ceremonyTime').value.trim()||null,
-      venue:$('venue').value.trim()||null,
-      venue_address:$('venueAddress').value.trim()||null,
-      map_url:$('mapUrl').value.trim()||null,
-      design:$('design').value.trim()||null,
-      language:$('language').value, // <--- මෙන්න මෙතන language එක නිවැරදිව එකතු කළා
-      message:$('message').value.trim()||null,
-      is_published:false
-    };
-
-    const {error}=await db.from('invitations').insert(row);
-    if(error){showMsg('createMsg','Could not save invitation: '+error.message,'error');return;}
-    showMsg('createMsg','Invitation saved as draft. You can publish it from the Invitations tab.','success');
-    $('inviteForm').reset();
-    await loadInvitations();
-    switchTab('invitations');
-  });
-
+  $('inviteForm').addEventListener('submit',async e=>{e.preventDefault();hideMsg('createMsg');const slug=$('slug').value.trim().toLowerCase();if(!/^[a-z0-9-]+$/.test(slug)){showMsg('createMsg','Slug must contain only lowercase letters, numbers and hyphens.','error');return;}const row={order_id:$('orderId').value||null,owner_user_id:$('ownerId').value.trim()||null,couple_names:$('coupleNames').value.trim(),slug,wedding_date:$('weddingDate').value||null,ceremony_time:$('ceremonyTime').value.trim()||null,venue:$('venue').value.trim()||null,venue_address:$('venueAddress').value.trim()||null,map_url:$('mapUrl').value.trim()||null,message:$('message').value.trim()||null,design:$('design').value.trim()||null,is_published:false};const {error}=await db.from('invitations').insert(row);if(error){showMsg('createMsg','Could not save invitation: '+error.message,'error');return;}showMsg('createMsg','Invitation saved as draft. You can publish it from the Invitations tab.','success');$('inviteForm').reset();await loadInvitations();switchTab('invitations');});
   $('refreshOrders').addEventListener('click',loadOrders);$('refreshInvites').addEventListener('click',loadInvitations);
-  function esc(value){return String(value??'').replace(/[&<>"']/g,c=>({'&':'&','<':'<','>':'>','"':'"',"'":'''}[c]));}
+  function esc(value){return String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
   db.auth.onAuthStateChange((_event)=>{checkSession();});checkSession();
 </script>
 </body></html>
